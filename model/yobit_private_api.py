@@ -6,6 +6,7 @@ import os
 import urllib
 import base64
 import logging
+import time
 
 from utils.constants import NONCE_FILE_NAME, DEFAULT_TIMEOUT
 
@@ -50,6 +51,27 @@ class YobitPrivateAPI:
             return str(result['return']['order_id'])
 
         self._logger.error('При постановке ордера возникла ошибка ' + str(result))
+        return None
+
+    def get_trade_history(self):
+        """ Получение истрории сделок
+        :return: истрория сделок
+        """
+        is_complete = False
+        while not is_complete:
+            self._logger.info('Попытка получить историю сделок')
+            try:
+                result = self._call_api(method="TradeHistory", pair=self.pair)
+                is_complete = True
+            except Exception:
+                is_complete = False
+                self._logger.exception('При попытке получить историю сделок возникла ошибка')
+                time.sleep(2)
+
+        if 'return' in result:
+            return str(result['return'])
+
+        self._logger.error('При попытке получить историю сделок возникла ошибка ' + str(result))
         return None
 
     def _get_nonce(self):
@@ -140,5 +162,6 @@ if __name__ == '__main__':
     api_key = ""
     api_secret = b""
     api_obj = YobitPrivateAPI(api_key, api_secret, "rur_usdt")
-    info = api_obj.place_order_buy(0.01355054, 0.01)
+    # info = api_obj.place_order_buy(0.01355054, 0.01)
+    info = api_obj.get_trade_history()
     print(info)
