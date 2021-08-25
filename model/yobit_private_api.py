@@ -28,13 +28,29 @@ class ProxyException(Exception):
 
 
 class YobitPrivateAPI:
-    def __init__(self, api_key, api_secret, proxies=None, time_out=DEFAULT_TIMEOUT, log_name="yobit_private_api"):
+    def __init__(self, api_key, api_secret, pair, proxies=None, time_out=DEFAULT_TIMEOUT, log_name="yobit_private_api"):
         self.api_key = api_key
         self.api_secret = api_secret
+        self.pair = pair
         self.time_out = time_out
         self.proxies = proxies
 
         self._logger = logging.getLogger(f'{log_name}.yobit_private_api')
+
+    def place_order_buy(self, price, amount):
+        self._logger.info('Попытка поставить ордер по цене ' + str(price))
+
+        try:
+            result = self._call_api(method="Trade", pair=self.pair, type="buy", rate=price, amount=amount)
+        except Exception:
+            self._logger.exception('При поставновке ордера на покупку возникла ошибка')
+            return None
+
+        if 'return' in result:
+            return str(result['return']['order_id'])
+
+        self._logger.error('При постановке ордера возникла ошибка ' + str(result))
+        return None
 
     def _get_nonce(self):
         # Каждый новый запрос к серверу должен содержать увеличенное число в диапазоне 1-2147483646
@@ -81,7 +97,7 @@ class YobitPrivateAPI:
                 try:
                     proxies_url = urllib.parse.urlparse(self.proxies)
                     proxies_host = proxies_url.hostname
-                    proxies_port = int(self.proxies[self.proxies.rfind(':')+1:])
+                    proxies_port = int(self.proxies[self.proxies.rfind(':') + 1:])
                     conn = http.client.HTTPSConnection(host=proxies_host, port=proxies_port, timeout=self.time_out)
 
                     proxies_headers = {}
@@ -123,6 +139,6 @@ class YobitPrivateAPI:
 if __name__ == '__main__':
     api_key = ""
     api_secret = b""
-    api_obj = YobitPrivateAPI(api_key, api_secret)
-    info = api_obj._call_api(method="getInfo")
+    api_obj = YobitPrivateAPI(api_key, api_secret, "rur_usdt")
+    info = api_obj.place_order_buy(0.01355054, 0.01)
     print(info)
