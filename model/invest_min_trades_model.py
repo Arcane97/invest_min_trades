@@ -46,6 +46,9 @@ class InvestMinTradesModel(QObject):
         quantity += round(self._min_amount / price, 8)
         return price, quantity
 
+    def _do_trade(self, price, quantity):
+        return self._yobit_private_api_obj.place_order_buy(price, quantity)
+
 
 if __name__ == "__main__":
     model = InvestMinTradesModel("", "", "rur_usdt", 1)
