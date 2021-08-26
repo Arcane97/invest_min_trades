@@ -32,6 +32,7 @@ class InvestMinTradesModel(QObject):
         glass_index = 0
         while amount < self._min_amount:
             price, glass_quantity = glass[glass_index]
+            print(price, glass_quantity)
             amount = price * glass_quantity
             glass_index += 1
 
@@ -39,7 +40,7 @@ class InvestMinTradesModel(QObject):
             quantity = round(self._min_amount / price, 8)
             return price, quantity
 
-        for index in range(glass_index-2):
+        for index in range(glass_index-1):
             quantity += glass[index][1]
 
         quantity += round(self._min_amount / price, 8)
@@ -49,4 +50,4 @@ class InvestMinTradesModel(QObject):
 if __name__ == "__main__":
     model = InvestMinTradesModel("", "", "rur_usdt", 1)
     result = model._get_price_and_quantity()
-    print(result, result[0]*result[1])
+    print('result', result, result[0]*result[1])
