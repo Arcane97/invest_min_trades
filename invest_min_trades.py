@@ -1,16 +1,36 @@
-# This is a sample Python script.
+import logging
+import sys
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from PyQt5.QtWidgets import QApplication
+
+from controller.invest_min_trades_controller import InvestMinTradesController
+from model.invest_min_trades_model import InvestMinTradesModel
+from utils.constants import LOG_FILE_NAME
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def create_log(log_name):
+    # логгер
+    logger = logging.getLogger(log_name)
+    logger.setLevel(logging.INFO)
+    # обработчик файла логов
+    file_handler = logging.FileHandler(LOG_FILE_NAME)
+    # форматирование файла логов
+    formatter_fh = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter_fh)
+    # добавление обработчиков к логгеру
+    logger.addHandler(file_handler)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def main():
+    log_name = "invest_min_trades"
+    create_log(log_name)
+    app = QApplication(sys.argv)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    model = InvestMinTradesModel("", "", "rur_usdt", 1, log_name)
+
+    controller = InvestMinTradesController(model, log_name)
+
+    app.exec()
+
+
+sys.exit(main())
