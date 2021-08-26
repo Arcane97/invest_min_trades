@@ -69,7 +69,7 @@ class YobitPrivateAPI:
                 time.sleep(2)
 
         if 'return' in result:
-            return str(result['return'])
+            return result['return']
 
         self._logger.error('При попытке получить историю сделок возникла ошибка ' + str(result))
         return None
