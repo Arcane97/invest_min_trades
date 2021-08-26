@@ -35,10 +35,11 @@ class YobitPublicAPI:
         :return: стакан
         """
         is_complete = False
+        glass = None
         while not is_complete:
             self._logger.info('Попытка получить стакан yobit')
             # получаем стакан с ордерами на покупку
-            query = YOBIT_DEPTH_LINK + self.pair
+            query = YOBIT_DEPTH_LINK + self.pair + '?limit=10'
             glass_req = self._make_request(query)
 
             if glass_req is None:
@@ -54,10 +55,11 @@ class YobitPublicAPI:
                 self._logger.error(e)
                 is_complete = False
 
+        self._logger.info(f'Получили стакан {glass}')
         return glass
 
 
 if __name__ == "__main__":
     api_obj = YobitPublicAPI("rur_usdt")
-    glass = api_obj.get_yobit_glass()
-    print(glass)
+    glass_ = api_obj.get_yobit_glass()
+    print(glass_)
