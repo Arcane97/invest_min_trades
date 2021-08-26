@@ -39,7 +39,7 @@ class YobitPrivateAPI:
         self._logger = logging.getLogger(f'{log_name}.yobit_private_api')
 
     def place_order_buy(self, price, amount):
-        self._logger.info('Попытка поставить ордер по цене ' + str(price))
+        self._logger.info(f'Попытка поставить ордер по цене {price}, количество {amount}')
 
         try:
             result = self._call_api(method="Trade", pair=self.pair, type="buy", rate=price, amount=amount)
