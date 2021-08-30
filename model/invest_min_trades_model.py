@@ -21,6 +21,14 @@ class InvestMinTradesModel(QObject):
 
         self._logger = logging.getLogger(f'{log_name}.model')
 
+    def set_api_key(self, api_key):
+        self.api_key = api_key
+        self._yobit_private_api_obj.api_key = self.api_key
+
+    def set_api_secret(self, api_secret):
+        self.api_secret = api_secret.encode()
+        self._yobit_private_api_obj.api_secret = self.api_secret
+
     def set_pair(self, pair):
         self.pair = pair
         self._yobit_private_api_obj.pair = self.pair

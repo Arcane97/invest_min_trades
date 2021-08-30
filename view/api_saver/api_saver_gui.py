@@ -12,10 +12,12 @@ class APISaverGUI(QtWidgets.QDialog):
     """ Окно сохранения API ключей
     """
 
-    def __init__(self, next_win=None, parent=None, log_name="invest_min_trades"):
+    def __init__(self, model, next_win=None, parent=None, log_name="invest_min_trades"):
         super().__init__(parent)
 
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+
+        self._model = model
 
         # следующее окно, которое откроестся после закрытия жанного окна
         self.next_win = next_win
@@ -26,6 +28,11 @@ class APISaverGUI(QtWidgets.QDialog):
         self._logger = logging.getLogger(f'{log_name}.api_saver')
 
         self.ui.api_save_btn.clicked.connect(self.save_api_key)
+
+    def _set_to_model(self, api_key, api_secret):
+        if self._model is not None:
+            self._model.set_api_key(api_key)
+            self._model.set_api_secret(api_secret)
 
     @staticmethod
     def _create_settings_file():
@@ -69,6 +76,7 @@ class APISaverGUI(QtWidgets.QDialog):
             self._create_settings_file()
 
         self._save_to_file(api_key, api_secret)
+        self._set_to_model(api_key, api_secret)
 
         msg = QtWidgets.QMessageBox()
         msg.setWindowTitle('Сохранение')
