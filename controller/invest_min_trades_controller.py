@@ -2,6 +2,8 @@ import json
 import logging
 import os
 
+from PyQt5.QtCore import QThread
+
 from view.invest_min_trades_view import InvestMinTradesView
 from view.api_saver.api_saver_gui import APISaverGUI
 from utils.constants import SETTINGS_FILE_NAME
@@ -16,12 +18,25 @@ class InvestMinTradesController:
 
         self._view = InvestMinTradesView(self, self._model, log_name)
 
+        self._invest_min_trades_thread = QThread()
+
         if not os.path.exists(SETTINGS_FILE_NAME):
             self._api_saver = APISaverGUI(self._model, next_win=self._view, log_name="invest_min_trades")
             self._api_saver.show()
         else:
             self._view.show()
             self._load_params()
+
+    def start_thread(self):
+        self._set_param_model()
+        self._model.moveToThread(self._invest_min_trades_thread)
+        self._invest_min_trades_thread.started.connect(self._model.start_trades)
+        self._invest_min_trades_thread.start()
+
+    def stop_thread(self):
+        if self._invest_min_trades_thread.isRunning():
+            self._model.stop_trades()
+            self._invest_min_trades_thread.terminate()
 
     def _load_params(self):
         if not os.path.exists(SETTINGS_FILE_NAME):
@@ -96,7 +111,5 @@ class InvestMinTradesController:
             json.dump(settings_data, file)
 
     def terminate_threads(self):
-        # if self._yobit_defi_thread.isRunning():
-        #     self._yobit_defi_thread.terminate()
-        pass
-
+        if self._invest_min_trades_thread.isRunning():
+            self._invest_min_trades_thread.terminate()
