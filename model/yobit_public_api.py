@@ -62,6 +62,8 @@ class YobitPublicAPI:
 
 
 if __name__ == "__main__":
-    api_obj = YobitPublicAPI("rur_usdt")
+    single = InvestMinTradesSingleton()
+    single.is_working = True
+    api_obj = YobitPublicAPI("yo_btc")
     glass_ = api_obj.get_yobit_glass()
     print(glass_)

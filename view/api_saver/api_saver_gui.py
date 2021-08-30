@@ -59,7 +59,7 @@ class APISaverGUI(QtWidgets.QDialog):
             settings_data['api_key'] = encrypted_api_key
             settings_data['api_secret'] = encrypted_api_secret
             json.dump(settings_data, file)
-            self._logger.info('API ключи сохванены')
+            self._logger.info('API ключи сохранены')
 
     def save_api_key(self):
         api_key = self.ui.api_key_ledit.text()
