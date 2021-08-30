@@ -143,7 +143,7 @@ class YobitPrivateAPI:
                     proxies_headers['Proxy-Authorization'] = 'Basic ' + encode_auth
                     conn.set_tunnel('yobit.net', headers=proxies_headers)
                 except Exception as e:
-                    raise ProxyException('ProxyException: ' + str(e))  # todo добавить обработку
+                    raise ProxyException('ProxyException: ' + str(e))
 
             conn.request("POST", "/tapi/", payload, headers)
             response_obj = conn.getresponse()
