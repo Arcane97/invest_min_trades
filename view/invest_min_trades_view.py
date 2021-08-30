@@ -26,3 +26,7 @@ class InvestMinTradesView(QMainWindow):
             self.ui.num_trades_ledit.setText(str(num_trades))
         except:
             self._logger.exception('При загрузке количества трейдов в интерфейс произошла ошибка')
+
+    def closeEvent(self, e):
+        self._controller.save_params()
+        self._controller.terminate_threads()

@@ -69,7 +69,7 @@ class InvestMinTradesController:
     def set_num_trades(self):
         try:
             num_trades = self._view.ui.num_trades_ledit.text()
-            self._model.num_trades = num_trades
+            self._model.num_trades = int(num_trades)
         except Exception:
             self._logger.exception('Ошибка при попытке считать количество трейдов')
         else:
@@ -78,3 +78,25 @@ class InvestMinTradesController:
     def _set_param_model(self):
         self.set_pair()
         self.set_num_trades()
+
+    def save_params(self):
+        try:
+            pair = self._view.ui.pair_ledit.text()
+            num_trades = int(self._view.ui.num_trades_ledit.text())
+        except:
+            self._logger.exception('При сохранении данных возникла ошибка')
+            return
+
+        with open(SETTINGS_FILE_NAME, "r") as file:
+            settings_data = json.load(file)
+
+        with open(SETTINGS_FILE_NAME, "w") as file:
+            settings_data['pair'] = pair
+            settings_data['num_trades'] = num_trades
+            json.dump(settings_data, file)
+
+    def terminate_threads(self):
+        # if self._yobit_defi_thread.isRunning():
+        #     self._yobit_defi_thread.terminate()
+        pass
+
