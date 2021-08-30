@@ -1,4 +1,5 @@
 import logging
+import time
 from PyQt5.QtCore import QObject
 
 from model.yobit_private_api import YobitPrivateAPI
@@ -24,15 +25,17 @@ class InvestMinTradesModel(QObject):
     def set_api_key(self, api_key):
         self.api_key = api_key
         self._yobit_private_api_obj.api_key = self.api_key
+        self._logger.info('api_key загружен в модель')
 
     def set_api_secret(self, api_secret):
         self.api_secret = api_secret.encode()
         self._yobit_private_api_obj.api_secret = self.api_secret
+        self._logger.info('api_secret загружен в модель')
 
     def set_pair(self, pair):
         self.pair = pair
         self._yobit_private_api_obj.pair = self.pair
-        self._yobit_public_api_obj = self.pair
+        self._yobit_public_api_obj.pair = self.pair
 
     def start_trades(self):
         self._logger.info('Старт')
@@ -48,12 +51,14 @@ class InvestMinTradesModel(QObject):
                 self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
             else:
                 self._logger.info('При трейде вознилка ошибка, проверяем исполнился ли ордер')
+                time.sleep(2)
                 if self._check_trade(last_trade):
                     last_trade = self._get_last_trade()
                     self.num_trades -= 1
                     self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
                 else:
                     self._logger.info('Трейд не выполнен, пытаемя снова')
+            time.sleep(1)
 
     def stop_trades(self):
         self._logger.info('Стоп')
@@ -71,12 +76,18 @@ class InvestMinTradesModel(QObject):
 
         if glass_index == 1:
             quantity = round(self._min_amount / price, 8)
+            while quantity * price < self._min_amount:
+                quantity += 0.00000001
             return price, quantity
 
         for index in range(glass_index-1):
             quantity += glass[index][1]
 
-        quantity += round(self._min_amount / price, 8)
+        qty = round(self._min_amount / price, 8)
+        while qty * price < self._min_amount:
+            qty += 0.00000001
+        quantity += qty
+
         return price, quantity
 
     def _do_trade(self, price, quantity):
