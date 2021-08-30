@@ -2,6 +2,7 @@ import logging
 import requests
 from requests.packages.urllib3.util.retry import Retry
 
+from utils.singleton import InvestMinTradesSingleton
 from utils.timeout_http_adapter import TimeoutHTTPAdapter
 
 YOBIT_DEPTH_LINK = "https://www.yobit.net/api/3/depth/"
@@ -14,6 +15,7 @@ class YobitPublicAPI:
         self.proxies = None
 
         self._logger = logging.getLogger(f'{log_name}.yobit_public_api')
+        self._singleton = InvestMinTradesSingleton()
 
     def _make_request(self, url):
         try:
@@ -36,7 +38,7 @@ class YobitPublicAPI:
         """
         is_complete = False
         glass = None
-        while not is_complete:
+        while not is_complete and self._singleton.is_working:
             self._logger.info('Попытка получить стакан yobit')
             # получаем стакан с ордерами на покупку
             query = YOBIT_DEPTH_LINK + self.pair + '?limit=10'

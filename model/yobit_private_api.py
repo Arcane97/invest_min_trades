@@ -9,6 +9,7 @@ import logging
 import time
 
 from utils.constants import NONCE_FILE_NAME, DEFAULT_TIMEOUT
+from utils.singleton import InvestMinTradesSingleton
 
 
 # Будем перехватывать все сообщения об ошибках с биржи
@@ -42,6 +43,8 @@ class YobitPrivateAPI:
 
         self._logger = logging.getLogger(f'{log_name}.yobit_private_api')
 
+        self._singleton = InvestMinTradesSingleton()
+
     def place_order_buy(self, price, amount):
         self._logger.info(f'Попытка поставить ордер по цене {price}, количество {amount}')
 
@@ -65,7 +68,8 @@ class YobitPrivateAPI:
         :return: истрория сделок
         """
         is_complete = False
-        while not is_complete:
+        result = None
+        while not is_complete and self._singleton.is_working:
             self._logger.info('Попытка получить историю сделок')
             try:
                 result = self._call_api(method="TradeHistory", pair=self.pair)
@@ -79,7 +83,7 @@ class YobitPrivateAPI:
                 self._logger.exception('При попытке получить историю сделок возникла ошибка')
                 time.sleep(2)
 
-        if 'return' in result:
+        if result is not None and 'return' in result:
             return result['return']
 
         self._logger.error('При попытке получить историю сделок возникла ошибка ' + str(result))

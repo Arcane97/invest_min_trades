@@ -35,6 +35,7 @@ class InvestMinTradesController:
 
     def stop_thread(self):
         if self._invest_min_trades_thread.isRunning():
+            self._invest_min_trades_thread.started.disconnect(self._model.start_trades)
             self._model.stop_trades()
             self._invest_min_trades_thread.terminate()
 

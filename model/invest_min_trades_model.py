@@ -4,6 +4,7 @@ from PyQt5.QtCore import QObject
 
 from model.yobit_private_api import YobitPrivateAPI
 from model.yobit_public_api import YobitPublicAPI
+from utils.singleton import InvestMinTradesSingleton
 
 
 class InvestMinTradesModel(QObject):
@@ -14,7 +15,7 @@ class InvestMinTradesModel(QObject):
         self.pair = pair
         self.num_trades = num_trades
 
-        self.is_working = False
+        self._singleton = InvestMinTradesSingleton()
         self._min_amount = 0.0001
 
         self._yobit_private_api_obj = YobitPrivateAPI(api_key, api_secret.encode(), self.pair, log_name=log_name)
@@ -39,10 +40,12 @@ class InvestMinTradesModel(QObject):
 
     def start_trades(self):
         self._logger.info('Старт')
-        self.is_working = True
+        self._singleton.is_working = True
         last_trade = self._get_last_trade()
-        while self.is_working and self.num_trades > 0:
+        while self._singleton.is_working and self.num_trades > 0:
             price, quantity = self._get_price_and_quantity()
+            if price is None:
+                return
             result = self._do_trade(price, quantity)
 
             if isinstance(result, str):
@@ -62,10 +65,12 @@ class InvestMinTradesModel(QObject):
 
     def stop_trades(self):
         self._logger.info('Стоп')
-        self.is_working = False
+        self._singleton.is_working = False
 
     def _get_price_and_quantity(self):
         glass = self._yobit_public_api_obj.get_yobit_glass()
+        if glass is None:
+            return None, None
         amount = 0.0
         quantity = 0.0
         glass_index = 0
@@ -95,12 +100,15 @@ class InvestMinTradesModel(QObject):
 
     def _check_trade(self, last_trade):
         trade_history = self._yobit_private_api_obj.get_trade_history()
+        if trade_history is None:
+            return None
         new_trade = next(iter(trade_history))
-
         return new_trade != last_trade
 
     def _get_last_trade(self):
         trade_history = self._yobit_private_api_obj.get_trade_history()
+        if trade_history is None:
+            return None
         return next(iter(trade_history))
 
 

@@ -2,6 +2,7 @@ import logging
 from PyQt5.QtWidgets import QMainWindow
 
 from view.invest_min_trades_view_ui import Ui_MainWindow
+from utils.singleton import InvestMinTradesSingleton
 from utils.text_editor_logger import QTextEditLogger
 
 
@@ -14,6 +15,8 @@ class InvestMinTradesView(QMainWindow):
 
         self._controller = controller
         self._model = model
+
+        self._singleton = InvestMinTradesSingleton()
 
         self._logger = logging.getLogger(f'{log_name}.view')
         self._create_log(log_name)
@@ -33,7 +36,7 @@ class InvestMinTradesView(QMainWindow):
         self.ui.working_btn.clicked.connect(self._working_btn_clicked)
 
     def _working_btn_clicked(self):
-        if self._model.is_working:
+        if self._singleton.is_working:
             self._controller.stop_thread()
             self.ui.working_btn.setText('Старт')
         else:
