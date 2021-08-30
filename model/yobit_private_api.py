@@ -28,6 +28,10 @@ class ProxyException(Exception):
     pass
 
 
+class YobitTimeoutException(Exception):
+    pass
+
+
 class YobitPrivateAPI:
     def __init__(self, api_key, api_secret, pair, proxies=None, time_out=DEFAULT_TIMEOUT, log_name="yobit_private_api"):
         self.api_key = api_key
@@ -43,6 +47,9 @@ class YobitPrivateAPI:
 
         try:
             result = self._call_api(method="Trade", pair=self.pair, type="buy", rate=price, amount=amount)
+        except YobitTimeoutException as e:
+            self._logger.error(e)
+            return None
         except Exception:
             self._logger.exception('При поставновке ордера на покупку возникла ошибка')
             return None
@@ -50,7 +57,7 @@ class YobitPrivateAPI:
         if 'return' in result:
             return str(result['return']['order_id'])
 
-        self._logger.error('При постановке ордера возникла ошибка ' + str(result))
+        self._logger.error('При поставновке ордера на покупку возникла ошибка ' + str(result))
         return None
 
     def get_trade_history(self):
@@ -63,6 +70,10 @@ class YobitPrivateAPI:
             try:
                 result = self._call_api(method="TradeHistory", pair=self.pair)
                 is_complete = True
+            except YobitTimeoutException as e:
+                is_complete = False
+                self._logger.error(e)
+                time.sleep(2)
             except Exception:
                 is_complete = False
                 self._logger.exception('При попытке получить историю сделок возникла ошибка')
@@ -143,7 +154,8 @@ class YobitPrivateAPI:
             self._logger.error('Получили бан!')
             raise YobitBAN('Получили бан!')
         except Exception as e:
-            self._logger.critical('Ошибка полдключения по API ключу')
+            if str(e) == "The read operation timed out":
+                raise YobitTimeoutException('Получили таймаут')
             raise YobitException('Ошибка полдключения по API ключу', e)
 
         try:
