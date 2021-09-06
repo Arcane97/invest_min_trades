@@ -83,7 +83,7 @@ class InvestMinTradesModel(QObject):
             quantity = round(self._min_amount / price, 8)
             while quantity * price < self._min_amount:
                 quantity += 0.00000001
-            return price, quantity
+            return price, round(quantity, 8)
 
         for index in range(glass_index-1):
             quantity += glass[index][1]
@@ -93,7 +93,7 @@ class InvestMinTradesModel(QObject):
             qty += 0.00000001
         quantity += qty
 
-        return price, quantity
+        return price, round(quantity, 8)
 
     def _do_trade(self, price, quantity):
         return self._yobit_private_api_obj.place_order_buy(price, quantity)
