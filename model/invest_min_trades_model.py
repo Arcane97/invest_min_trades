@@ -42,8 +42,26 @@ class InvestMinTradesModel(QObject):
         self._logger.info('Старт')
         self._singleton.is_working = True
         last_trade = self._get_last_trade()
+        is_complete_trade = False
+        glass = None
         while self._singleton.is_working and self.num_trades > 0:
-            price, quantity = self._get_price_and_quantity()
+            if is_complete_trade:
+                new_glass = self._yobit_public_api_obj.get_yobit_glass()
+                if new_glass is None:
+                    return
+                while self._singleton.is_working and glass == new_glass:
+                    self._logger.error('Получили старый стакан, получаем новый')
+                    time.sleep(2)
+                    new_glass = self._yobit_public_api_obj.get_yobit_glass()
+                    if new_glass is None:
+                        return
+                glass = new_glass
+            else:
+                glass = self._yobit_public_api_obj.get_yobit_glass()
+                if glass is None:
+                    return
+
+            price, quantity = self._get_price_and_quantity(glass)
             if price is None:
                 return
             result = self._do_trade(price, quantity)
@@ -51,6 +69,7 @@ class InvestMinTradesModel(QObject):
             if isinstance(result, str):
                 last_trade = self._get_last_trade()
                 self.num_trades -= 1
+                is_complete_trade = True
                 self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
             else:
                 self._logger.info('При трейде вознилка ошибка, проверяем исполнился ли ордер')
@@ -58,19 +77,18 @@ class InvestMinTradesModel(QObject):
                 if self._check_trade(last_trade):
                     last_trade = self._get_last_trade()
                     self.num_trades -= 1
+                    is_complete_trade = True
                     self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
                 else:
+                    is_complete_trade = False
                     self._logger.info('Трейд не выполнен, пытаемя снова')
-            time.sleep(1)
+            time.sleep(3)
 
     def stop_trades(self):
         self._logger.info('Стоп')
         self._singleton.is_working = False
 
-    def _get_price_and_quantity(self):
-        glass = self._yobit_public_api_obj.get_yobit_glass()
-        if glass is None:
-            return None, None
+    def _get_price_and_quantity(self, glass):
         amount = 0.0
         quantity = 0.0
         glass_index = 0
