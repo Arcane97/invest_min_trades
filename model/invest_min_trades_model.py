@@ -81,7 +81,7 @@ class InvestMinTradesModel(QObject):
 
         if glass_index == 1:
             quantity = round(self._min_amount / price, 8)
-            while quantity * price < self._min_amount:
+            while round(quantity, 8) * price < self._min_amount:
                 quantity += 0.00000001
             return price, round(quantity, 8)
 
@@ -89,7 +89,7 @@ class InvestMinTradesModel(QObject):
             quantity += glass[index][1]
 
         qty = round(self._min_amount / price, 8)
-        while qty * price < self._min_amount:
+        while round(qty, 8) * price < self._min_amount:
             qty += 0.00000001
         quantity += qty
 
