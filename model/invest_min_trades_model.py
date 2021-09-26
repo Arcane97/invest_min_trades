@@ -38,6 +38,20 @@ class InvestMinTradesModel(QObject):
         self._yobit_private_api_obj.pair = self.pair
         self._yobit_public_api_obj.pair = self.pair
 
+    def _get_glass(self, is_complete_trade, glass):
+        if is_complete_trade:
+            new_glass = self._yobit_public_api_obj.get_yobit_glass()
+            if new_glass is None:
+                return None
+
+            while self._singleton.is_working and glass == new_glass:
+                self._logger.error('Получили старый стакан, получаем новый')
+                time.sleep(2)
+                new_glass = self._yobit_public_api_obj.get_yobit_glass()
+            return new_glass
+        else:
+            return self._yobit_public_api_obj.get_yobit_glass()
+
     def start_trades(self):
         self._logger.info('Старт')
         self._singleton.is_working = True
@@ -45,43 +59,23 @@ class InvestMinTradesModel(QObject):
         is_complete_trade = False
         glass = None
         while self._singleton.is_working and self.num_trades > 0:
-            if is_complete_trade:
-                new_glass = self._yobit_public_api_obj.get_yobit_glass()
-                if new_glass is None:
-                    return
-                while self._singleton.is_working and glass == new_glass:
-                    self._logger.error('Получили старый стакан, получаем новый')
-                    time.sleep(2)
-                    new_glass = self._yobit_public_api_obj.get_yobit_glass()
-                    if new_glass is None:
-                        return
-                glass = new_glass
-            else:
-                glass = self._yobit_public_api_obj.get_yobit_glass()
-                if glass is None:
-                    return
+            glass = self._get_glass(is_complete_trade, glass)
+            if glass is None:
+                return
 
             price, quantity = self._get_price_and_quantity(glass)
             if price is None:
                 return
-            result = self._do_trade(price, quantity)
 
-            if isinstance(result, str):
-                last_trade = self._get_last_trade()
+            self._do_trade(price, quantity)
+            print(last_trade)
+            is_complete_trade, last_trade = self._check_trade(last_trade)
+            if is_complete_trade:
                 self.num_trades -= 1
-                is_complete_trade = True
                 self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
             else:
-                self._logger.info('При трейде вознилка ошибка, проверяем исполнился ли ордер')
-                time.sleep(2)
-                if self._check_trade(last_trade):
-                    last_trade = self._get_last_trade()
-                    self.num_trades -= 1
-                    is_complete_trade = True
-                    self._logger.info(f'Трейд успешно выполнен. Осталось тредов: {self.num_trades}')
-                else:
-                    is_complete_trade = False
-                    self._logger.info('Трейд не выполнен, пытаемя снова')
+                self._logger.info('Трейд не выполнен, пытаемя снова')
+
             time.sleep(3)
 
     def stop_trades(self):
@@ -119,15 +113,31 @@ class InvestMinTradesModel(QObject):
     def _check_trade(self, last_trade):
         trade_history = self._yobit_private_api_obj.get_trade_history()
         if trade_history is None:
-            return None
-        new_trade = next(iter(trade_history))
-        return new_trade != last_trade
+            return None, None
+
+        new_trade = None
+        for key, deal in trade_history.items():
+            amount = deal['rate'] * deal['amount']
+            if amount >= 0.0001:
+                new_trade = key
+                break
+
+        if new_trade is None:
+            return False, new_trade
+        return new_trade != last_trade, new_trade
 
     def _get_last_trade(self):
         trade_history = self._yobit_private_api_obj.get_trade_history()
         if trade_history is None:
             return None
-        return next(iter(trade_history))
+
+        last_trade = None
+        for key, deal in trade_history.items():
+            amount = deal['rate'] * deal['amount']
+            if amount >= 0.0001:
+                last_trade = key
+                break
+        return last_trade
 
 
 if __name__ == "__main__":
